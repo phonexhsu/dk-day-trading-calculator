@@ -18,9 +18,11 @@
         function App() {
             const [direction, setDirection] = useState('long');
             const [type, setType] = useState('stock');
+            // Modified: default volume set to 10
             const [volume, setVolume] = useState(10);
             const [price, setPrice] = useState('');
             const [stopLoss, setStopLoss] = useState('');
+            // Modified: default discount set to 1.0 (no discount)
             const [discount, setDiscount] = useState(1.0);
 
             const [results, setResults] = useState(null);
@@ -44,7 +46,8 @@
                 const t = type === 'stock' ? 0.0015 : 0.0010;
                 const shares = v * 1000;
 
-                const margins = [0.005, 0.01, 0.015, 0.02, 0.025, 0.03, -0.02, -0.03, -0.04];
+                // Modified: added negative profit targets
+                const margins = [0.03, 0.025, 0.02, 0.015, 0.01, 0.005, -0.02, -0.03, -0.04];
                 let calcResults = { targets: [], stopLossPrice: 0, baseAmount: 0 };
 
                 if (direction === 'long') {
@@ -92,7 +95,7 @@
                                 </label>
                                 <label class="flex items-center">
                                     <input type="radio" checked={direction === 'short'} onChange={() => setDirection('short')} class="mr-2" /> 做空
-                                </label>
+                                label>
                             </div>
                         </div>
 
@@ -112,7 +115,8 @@
                             <label class="block text-gray-700 font-bold mb-2">張數</label>
                             <div class="flex items-center">
                                 <button onClick={() => handleVolumeChange(-1)} class="bg-gray-200 px-4 py-2 rounded-l border border-gray-300 hover:bg-gray-300">-</button>
-                                <input type="number" min="1" value={volume} onChange={(e) => setVolume(parseInt(e.target.value) || 1)} class="w-20 text-center py-2 border-y border-gray-300 focus:outline-none" />
+                                {/* Modified: cleared value sets back to 10 */}
+                                <input type="number" min="1" value={volume} onChange={(e) => setVolume(parseInt(e.target.value) || 10)} class="w-20 text-center py-2 border-y border-gray-300 focus:outline-none" />
                                 <button onClick={() => handleVolumeChange(1)} class="bg-gray-200 px-4 py-2 rounded-r border border-gray-300 hover:bg-gray-300">+</button>
                             </div>
                         </div>
@@ -152,18 +156,22 @@
                                         </tr>
                                     </thead>
                                     <tbody>
+                                        {/* Modified: dynamic color logic for profit/loss based on TW stock convention (red for profit, green for loss) */}
                                         {results.targets.map((t, idx) => (
                                             <tr key={idx} class="hover:bg-gray-50">
                                                 <td class="p-2 border">{t.margin}%</td>
-                                                <td class="p-2 border font-bold text-green-600">{t.price}</td>
-                                                <td class="p-2 border">{t.profit}</td>
+                                                {/* Modified: price color follows profit color convention */}
+                                                <td class={`p-2 border font-bold ${t.margin >= 0 ? 'text-red-600' : 'text-green-600'}`}>{t.price}</td>
+                                                <td class={`p-2 border ${t.profit >= 0 ? 'text-red-600' : 'text-green-600'}`}>{t.profit}</td>
                                             </tr>
                                         ))}
                                         {stopLoss > 0 && (
-                                            <tr class="bg-red-50 hover:bg-red-100">
-                                                <td class="p-2 border text-red-600 font-bold">停損設定</td>
-                                                <td class="p-2 border font-bold text-red-600">{results.stopLossPrice}</td>
-                                                <td class="p-2 border text-red-600">-{stopLoss}</td>
+                                            // Modified: Changed background and hover colors to green scheme
+                                            <tr class="bg-green-50 hover:bg-green-100">
+                                                {/* Modified: Changed text colors to green-600 */}
+                                                <td class="p-2 border text-green-600 font-bold">停損設定</td>
+                                                <td class="p-2 border font-bold text-green-600">{results.stopLossPrice}</td>
+                                                <td class="p-2 border text-green-600">-{stopLoss}</td>
                                             </tr>
                                         )}
                                     </tbody>
