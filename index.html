@@ -112,7 +112,7 @@
                             <label class="block text-gray-700 font-bold mb-2">張數</label>
                             <div class="flex items-center">
                                 <button onClick={() => handleVolumeChange(-1)} class="bg-gray-200 px-4 py-2 rounded-l border border-gray-300 hover:bg-gray-300">-</button>
-                                <input type="number" min="1" value={volume} onChange={(e) => setVolume(parseInt(e.target.value) || 1)} class="w-20 text-center py-2 border-y border-gray-300 focus:outline-none" />
+                                <input type="number" min="1" value={volume} onChange={(e) => setVolume(parseInt(e.target.value) || 10)} class="w-20 text-center py-2 border-y border-gray-300 focus:outline-none" />
                                 <button onClick={() => handleVolumeChange(1)} class="bg-gray-200 px-4 py-2 rounded-r border border-gray-300 hover:bg-gray-300">+</button>
                             </div>
                         </div>
