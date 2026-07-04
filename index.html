@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>當沖計算機 (React Prototype)</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function App() {
+            const [direction, setDirection] = useState('long');
+            const [type, setType] = useState('stock');
+            const [volume, setVolume] = useState(1);
+            const [price, setPrice] = useState('');
+            const [stopLoss, setStopLoss] = useState('');
+            const [discount, setDiscount] = useState(1.0);
+
+            const [results, setResults] = useState(null);
+
+            const handleVolumeChange = (delta) => {
+                setVolume(prev => Math.max(1, prev + delta));
+            };
+
+            useEffect(() => {
+                const p = parseFloat(price);
+                const v = parseInt(volume, 10);
+                const sl = parseFloat(stopLoss) || 0;
+                const d = parseFloat(discount) || 1;
+
+                if (isNaN(p) || p <= 0 || v <= 0) {
+                    setResults(null);
+                    return;
+                }
+
+                const f = 0.001425 * d;
+                const t = type === 'stock' ? 0.0015 : 0.0010;
+                const shares = v * 1000;
+
+                const margins = [0.005, 0.01, 0.015, 0.02, 0.025, 0.03];
+                let calcResults = { targets: [], stopLossPrice: 0, baseAmount: 0 };
+
+                if (direction === 'long') {
+                    const cost = p * shares * (1 + f);
+                    calcResults.baseAmount = cost;
+                    
+                    calcResults.targets = margins.map(m => {
+                        const targetOut = (p * (1 + f) * (1 + m)) / (1 - f - t);
+                        const netProfit = (targetOut * shares * (1 - f - t)) - cost;
+                        return { margin: m * 100, price: targetOut.toFixed(2), profit: netProfit.toFixed(0) };
+                    });
+
+                    if (sl > 0) {
+                        calcResults.stopLossPrice = ((cost - sl) / (shares * (1 - f - t))).toFixed(2);
+                    }
+                } else {
+                    const revenue = p * shares * (1 - f - t);
+                    calcResults.baseAmount = revenue;
+                    
+                    calcResults.targets = margins.map(m => {
+                        const targetOut = (p * (1 - f - t) * (1 - m)) / (1 + f);
+                        const netProfit = revenue - (targetOut * shares * (1 + f));
+                        return { margin: m * 100, price: targetOut.toFixed(2), profit: netProfit.toFixed(0) };
+                    });
+
+                    if (sl > 0) {
+                        calcResults.stopLossPrice = ((revenue + sl) / (shares * (1 + f))).toFixed(2);
+                    }
+                }
+
+                setResults(calcResults);
+            }, [direction, type, volume, price, stopLoss, discount]);
+
+            return (
+                <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* 輸入區塊 */}
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h2 class="text-xl font-bold mb-4">參數設定</h2>
+                        
+                        <div class="mb-4">
+                            <label class="block text-gray-700 font-bold mb-2">方向</label>
+                            <div class="flex space-x-4">
+                                <label class="flex items-center">
+                                    <input type="radio" checked={direction === 'long'} onChange={() => setDirection('long')} class="mr-2" /> 做多
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" checked={direction === 'short'} onChange={() => setDirection('short')} class="mr-2" /> 做空
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700 font-bold mb-2">商品類型</label>
+                            <div class="flex space-x-4">
+                                <label class="flex items-center">
+                                    <input type="radio" checked={type === 'stock'} onChange={() => setType('stock')} class="mr-2" /> 個股 (稅率 0.15%)
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" checked={type === 'etf'} onChange={() => setType('etf')} class="mr-2" /> ETF (稅率 0.1%)
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700 font-bold mb-2">張數</label>
+                            <div class="flex items-center">
+                                <button onClick={() => handleVolumeChange(-1)} class="bg-gray-200 px-4 py-2 rounded-l border border-gray-300 hover:bg-gray-300">-</button>
+                                <input type="number" min="1" value={volume} onChange={(e) => setVolume(parseInt(e.target.value) || 1)} class="w-20 text-center py-2 border-y border-gray-300 focus:outline-none" />
+                                <button onClick={() => handleVolumeChange(1)} class="bg-gray-200 px-4 py-2 rounded-r border border-gray-300 hover:bg-gray-300">+</button>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700 font-bold mb-2">進場價格</label>
+                            <input type="number" step="0.05" value={price} onChange={(e) => setPrice(e.target.value)} class="w-full px-3 py-2 border rounded focus:outline-none focus:ring focus:border-blue-300" placeholder="例如: 100" />
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700 font-bold mb-2">停損金額 (元)</label>
+                            <input type="number" value={stopLoss} onChange={(e) => setStopLoss(e.target.value)} class="w-full px-3 py-2 border rounded focus:outline-none focus:ring focus:border-blue-300" placeholder="例如: 5000" />
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700 font-bold mb-2">手續費折數</label>
+                            <input type="number" step="0.1" min="0.1" max="1" value={discount} onChange={(e) => setDiscount(e.target.value)} class="w-full px-3 py-2 border rounded focus:outline-none focus:ring focus:border-blue-300" />
+                            <span class="text-sm text-gray-500">預設 1.0 (無折扣)，若為28折請輸入 0.28</span>
+                        </div>
+                    </div>
+
+                    {/* 結果區塊 */}
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h2 class="text-xl font-bold mb-4">試算結果</h2>
+                        {results ? (
+                            <div>
+                                <div class="mb-4 p-3 bg-blue-50 text-blue-800 rounded">
+                                    <strong>{direction === 'long' ? '進場總成本' : '進場總收入'}:</strong> {Math.round(results.baseAmount).toLocaleString()} 元
+                                </div>
+
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr class="bg-gray-100">
+                                            <th class="p-2 border">目標淨利</th>
+                                            <th class="p-2 border">出場價位</th>
+                                            <th class="p-2 border">預估獲利(元)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {results.targets.map((t, idx) => (
+                                            <tr key={idx} class="hover:bg-gray-50">
+                                                <td class="p-2 border">{t.margin}%</td>
+                                                <td class="p-2 border font-bold text-green-600">{t.price}</td>
+                                                <td class="p-2 border">{t.profit}</td>
+                                            </tr>
+                                        ))}
+                                        {stopLoss > 0 && (
+                                            <tr class="bg-red-50 hover:bg-red-100">
+                                                <td class="p-2 border text-red-600 font-bold">停損設定</td>
+                                                <td class="p-2 border font-bold text-red-600">{results.stopLossPrice}</td>
+                                                <td class="p-2 border text-red-600">-{stopLoss}</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                                <p class="text-xs text-gray-400 mt-4">* 註：此計算機產出之「出場價位」尚未進行台股升降單位（Tick size）之四捨五入/進位處理，僅提供精確理論值供參考。</p>
+                            </div>
+                        ) : (
+                            <div class="text-gray-400 flex h-40 items-center justify-center">
+                                請於左側輸入進場價格與張數以顯示結果
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
