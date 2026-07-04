@@ -47,7 +47,7 @@
                 const shares = v * 1000;
 
                 // Modified: added negative profit targets
-                const margins = [0.03, 0.025, 0.02, 0.015, 0.01, 0.005, -0.02, -0.03, -0.04];
+                const margins = [0.03, 0.025, 0.02, 0.015, 0.01, -0.02, -0.03, -0.04];
                 let calcResults = { targets: [], stopLossPrice: 0, baseAmount: 0 };
 
                 if (direction === 'long') {
@@ -160,9 +160,8 @@
                                         {results.targets.map((t, idx) => (
                                             <tr key={idx} class="hover:bg-gray-50">
                                                 <td class="p-2 border">{t.margin}%</td>
-                                                {/* Modified: price color follows profit color convention */}
-                                                <td class={`p-2 border font-bold ${t.margin >= 0 ? 'text-red-600' : 'text-green-600'}`}>{t.price}</td>
-                                                <td class={`p-2 border ${t.profit >= 0 ? 'text-red-600' : 'text-green-600'}`}>{t.profit}</td>
+                                                <td class="p-2 border font-bold text-red-600">{t.price}</td>
+                                                <td class="p-2 border text-red-600">{t.profit}</td>
                                             </tr>
                                         ))}
                                         {stopLoss > 0 && (
