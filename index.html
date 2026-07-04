@@ -44,7 +44,7 @@
                 const t = type === 'stock' ? 0.0015 : 0.0010;
                 const shares = v * 1000;
 
-                const margins = [0.005, 0.01, 0.015, 0.02, 0.025, 0.03];
+                const margins = [0.005, 0.01, 0.015, 0.02, 0.025, 0.03, -0.02, -0.03, -0.04];
                 let calcResults = { targets: [], stopLossPrice: 0, baseAmount: 0 };
 
                 if (direction === 'long') {
