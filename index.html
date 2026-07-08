@@ -49,7 +49,7 @@
                 return price < 50 ? 0.01 : 0.05;
             }
 
-            if (price < 5) return 0.01;
+            if (price < 10) return 0.01;
             if (price < 50) return 0.05;
             if (price < 100) return 0.10;
             if (price < 500) return 0.50;
@@ -757,7 +757,7 @@
                                     </div>
 
                                     <p className="text-xs leading-5 text-zinc-500">
-                                        升降單位依臺灣證券交易所集中市場規則估算；手續費、稅額以元為單位四捨五入，實際收費仍以券商成交回報為準。
+                                        升降單位依臺灣證券交易所集中市場規則估算；個股當沖證交稅以千分之 1.5、一般 ETF 以千分之 1 試算。特殊商品與手續費、稅額取整仍以券商成交回報為準。
                                     </p>
                                 </div>
                             )}
